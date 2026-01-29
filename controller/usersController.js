@@ -1,7 +1,48 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
+const jwt= require("jsonwebtoken")
 
-const getUsers = async (req, res) => {
+const loginUsers= async ( req, res, next) => {
+  try {
+    const {username, password} = req.body;
+    if (!username || !password){
+      return res.status(400).json ({
+        status: "error",
+        message: "username dan password wajib diisi"
+      })}    
+    
+    const query= "SELECT * FROM users WHERE username=?"
+    const [rows]= await db.execute (query, [username]);
+
+    if (rows.length ===0){
+      return res.status (401).json ({
+    message: "username atau password salah"
+      })
+  }
+    const user = rows[0];
+
+    const isMatch = await bcrypt.compare (password, user.password);
+
+    if (!isMatch){
+      return res.status (401).json ({
+        message: "username atau password salah"
+      })
+
+      const token = jwt.sign (
+        { id: user.id, username: user.username, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );}
+      return res.status (200).json ({
+        message: "login berhasil",
+        token: token
+      })
+  } catch (error) {
+    next (error);
+    }
+  }
+
+ const getUsers = async (req, res) => {
   try {
     const query = "SELECT * FROM users ";
     const [rows] = await db.execute(query);

@@ -8,6 +8,7 @@ app.use(express.json());
 app.use("/", router);
 
 app.use(errorhandler);
+message: "haiiii kamuuu"
 
 app.listen(port, () => {
   console.log("server running on port http://localhost:3006");

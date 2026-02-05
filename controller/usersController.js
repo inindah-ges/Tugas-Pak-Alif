@@ -1,46 +1,66 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
-const jwt= require("jsonwebtoken")
+const jwt= require("jsonwebtoken");
+const { get } = require("../router/router");
 
-const loginUsers= async ( req, res, next) => {
+const loginUsers = async (req, res, next) => {
   try {
-    const {username, password} = req.body;
-    if (!username || !password){
-      return res.status(400).json ({
-        status: "error",
-        message: "username dan password wajib diisi"
-      })}    
-    
-    const query= "SELECT * FROM users WHERE username=?"
-    const [rows]= await db.execute (query, [username]);
+    const { username, password } = req.body;
 
-    if (rows.length ===0){
-      return res.status (401).json ({
-    message: "username atau password salah"
-      })
-  }
+    if (!username || !password) {
+      return res.status(400).json({
+        status: "error",
+        message: "username dan password wajib diisi",
+      });
+    }
+
+    const query = "SELECT * FROM users WHERE nama = ?";
+    const [rows] = await db.execute(query, [username]);
+
+    if (rows.length === 0) {
+      return res.status(401).json({
+        message: "username atau password salah",
+      });
+    }
+
     const user = rows[0];
 
-    const isMatch = await bcrypt.compare (password, user.password);
-
-    if (!isMatch){
-      return res.status (401).json ({
-        message: "username atau password salah"
-      })
-
-      const token = jwt.sign (
-        { id: user.id, username: user.username, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" }
-      );}
-      return res.status (200).json ({
-        message: "login berhasil",
-        token: token
-      })
-  } catch (error) {
-    next (error);
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "username atau password salah",
+      });
     }
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    return res.status(200).json({
+      message: "login berhasil",
+      token,
+    });
+
+  } catch (error) {
+    next(error);
   }
+};
+
+const getById = async (req, res) => {
+    try{
+        const { id } = req.params
+        const query = 'SELECT * FROM users WHERE id = ?'
+        const [rows] = await db.query(query, id)
+        await res.status(200).json({
+            message: 'berhasil get data',
+            data: rows
+        })
+    } catch(error) {
+        throw error
+    }
+}
 
  const getUsers = async (req, res) => {
   try {
@@ -120,6 +140,8 @@ const deleteUsers = async (req, res) => {
 };
 
 module.exports = {
+  loginUsers,
+  getById,
   getUsers,
   postUsers,
   updateUsers,

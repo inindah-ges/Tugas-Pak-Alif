@@ -1,5 +1,19 @@
 const db = require("../config/db");
 
+const getById = async (req, res) => {
+    try{
+        const { id } = req.params
+        const query = 'SELECT * FROM product WHERE id = ?'
+        const [rows] = await db.query(query, id)
+        await res.status(200).json({
+            message: 'berhasil get data',
+            data: rows
+        })
+    } catch(error) {
+        throw error
+    }
+}
+
 const getProduct = async (req, res) => {
   try {
     const query =
@@ -83,6 +97,7 @@ const deleteProduct = async (req, res) => {
 
 module.exports = {
   getProduct,
+  getById,
   postProduct,
   updateProduct,
   deleteProduct,

@@ -5,7 +5,7 @@ const auth = (req, res, next) => {
     if (!token) {
         return res.status(401).json({
             status: 'error',
-            message:'Tidak Ter Validasi'
+            message:'Token Salah'
         })
     }
 

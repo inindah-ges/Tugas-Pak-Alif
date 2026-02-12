@@ -39,6 +39,13 @@ const postProduct = async (req, res) => {
         status: "error",
         message: "nama dan harga wajib diisi",
       });
+    } 
+
+    if (isNaN(data.harga)) {
+      return res.status(400).json({
+        status: "error",
+        message: "harga harus berupa angka",
+      });
     }
     const query = "INSERT INTO product (nama, harga) VALUES(?,?)";
     await db.execute(query, [data.nama, data.harga]);
@@ -53,12 +60,21 @@ const postProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama, harga } = req.body;
+    const data = {
+      nama: req.body.nama,
+      harga: req.body.harga
+    }
 
-    if(!nama || !harga){
+    if(!data.nama || !data.harga){
       return res.status(400).json({
         status: "error",
         message: "nama dan harga wajib diisi",
+      });
+    }
+    if (isNaN(data.harga)) {
+      return res.status(400).json({
+        status: "error",
+        message: "harga harus berupa angka",
       });
     }
 

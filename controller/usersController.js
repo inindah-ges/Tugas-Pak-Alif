@@ -1,25 +1,24 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
-const jwt= require("jsonwebtoken");
-const { get } = require("../router/router");
+const jwt = require("jsonwebtoken");
 
 const loginUsers = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
+    const { nama, password } = req.body;
 
-    if (!username || !password) {
+    if (!nama || !password) {
       return res.status(400).json({
         status: "error",
-        message: "username dan password wajib diisi",
+        message: "nama dan password wajib diisi",
       });
     }
 
     const query = "SELECT * FROM users WHERE nama = ?";
-    const [rows] = await db.execute(query, [username]);
+    const [rows] = await db.query(query, [nama]);
 
     if (rows.length === 0) {
       return res.status(401).json({
-        message: "username atau password salah",
+        message: "nama atau password salah",
       });
     }
 
@@ -28,66 +27,67 @@ const loginUsers = async (req, res, next) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({
-        message: "username atau password salah",
+        message: "password salah",
       });
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username },
+      { id: user.id, nama: user.nama, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     return res.status(200).json({
       message: "login berhasil",
       token,
     });
-
   } catch (error) {
     next(error);
   }
 };
 
-const getById = async (req, res) => {
-    try{
-        const { id } = req.params
-        const query = 'SELECT * FROM users WHERE id = ?'
-        const [rows] = await db.query(query, id)
-        await res.status(200).json({
-            message: 'berhasil get data',
-            data: rows
-        })
-    } catch(error) {
-        throw error
-    }
-}
-
- const getUsers = async (req, res) => {
+const getUsers = async (req, res, next) => {
   try {
-    const query = "SELECT * FROM users ";
-    const [rows] = await db.execute(query);
-    res.status(200).json({
+    const query = 'SELECT * FROM users';
+    const [rows] = await db.query(query);
+    await res.status(200).json({
       message: "berhasil get data user",
-      data: rows,
+      data: rows
     });
   } catch (err) {
-    throw err;
+    next(err); 
   }
 };
+
+const getById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = "SELECT * FROM users WHERE id = ?";
+    const [rows] = await db.query(query, id);
+    await res.status(200).json({
+      message: "berhasil get data",
+      data: rows,
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+
 
 const postUsers = async (req, res) => {
   try {
     const { nama, email, password, role } = req.body;
-    if (!nama || !email || !password || !role) {
+    if (!nama || !email || !password) {
       return res.status(400).json({
         status: "error",
-        message: "nama, email, password, dan role wajib diisi",
+        message: "nama, email, password wajib diisi",
       });
     }
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(password, 10);
     const query =
-      "INSERT INTO users (nama, email, password, role) VALUES (?,?,?,?)"
-       await db.execute(query, [nama, email, hashedPassword, role]);
+      "INSERT INTO users (nama, email, password, role) VALUES (?,?,?,?)";
+    await db.execute(query, [nama, email, hashedPassword, role || "user"]);
 
     res.status(201).json({
       status: "success",
@@ -104,16 +104,21 @@ const postUsers = async (req, res) => {
 const updateUsers = async (req, res) => {
   try {
     const { id } = req.params;
-
     const { nama, email, password, role } = req.body;
-
+    if (!nama || !email || !password || !role) {
+      return res.status(400).json({
+        status: "error",
+        message: "nama, email, password, dan role wajib diisi",
+      });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
     const query = `
       UPDATE users
       SET nama = ?, email = ?, password = ?, role = ?
       WHERE id = ?
     `;
 
-    await db.execute(query, [nama, email, password, role, id]);
+    await db.execute(query, [nama, email, hashedPassword, role, id]);
 
     res.status(200).json({
       message: "Data user berhasil diupdate",

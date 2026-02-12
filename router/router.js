@@ -11,13 +11,10 @@ router.put("/product/:id", auth, checkRole("admin"), productController.updatePro
 router.delete("/product/:id", auth, checkRole("admin"), productController.deleteProduct);
 router.get('/:id', productController.getById)
 
-router.get("/users", usersController.getUsers);
+router.get('/users', usersController.getUsers);
 router.post("/users", usersController.postUsers);
 router.put("/users/:id", usersController.updateUsers);
 router.delete("/users/:id", usersController.deleteUsers);
 router.post("/users/login", usersController.loginUsers);
-
-
-
 
 module.exports = router;
